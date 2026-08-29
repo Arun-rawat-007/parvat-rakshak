@@ -200,7 +200,7 @@ export default function App() {
 
   const fileInputRef = useRef(null);
 
-  // Live WebSocket Telemetry State
+  // Telemetry State
   const [telemetry, setTelemetry] = useState({
     porePressure: 142.4,
     piezometerLevel: 28.6,
@@ -337,7 +337,7 @@ export default function App() {
   ];
 
   return (
-    <div className="w-full min-h-screen lg:h-screen bg-[#070A12] text-[#F1F5F9] flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden font-sans">
+    <div className="w-full min-h-screen lg:h-screen bg-[#070A12] text-[#F1F5F9] flex flex-col lg:flex-row overflow-x-hidden">
       
       {/* CITIZEN SOS MODAL */}
       {isSOSModalOpen && (
@@ -449,8 +449,8 @@ export default function App() {
         </div>
       )}
 
-      {/* LEFT SIDEBAR / TOP SECTION ON MOBILE */}
-      <div className="w-full lg:w-[380px] lg:min-w-[380px] bg-[#0D1424] border-b lg:border-b-0 lg:border-r border-[#1E293B] p-4 flex flex-col justify-between shrink-0 z-20 overflow-y-visible lg:overflow-y-auto">
+      {/* LEFT SECTION (Mobile: normal block; Laptop: fixed side-by-side) */}
+      <div className="w-full lg:w-[380px] lg:min-w-[380px] bg-[#0D1424] border-b lg:border-b-0 lg:border-r border-[#1E293B] p-4 flex flex-col justify-between shrink-0 z-20 lg:h-full lg:overflow-y-auto">
         <div className="flex flex-col gap-3">
           
           {/* Brand */}
@@ -523,7 +523,7 @@ export default function App() {
           </div>
 
           {/* Hotspot Corridor List */}
-          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
             {filteredZones.map((zone) => (
               <div 
                 key={zone.id} 
@@ -574,11 +574,11 @@ export default function App() {
       </div>
 
       {/* RIGHT MAIN VIEWPORT */}
-      <div className="flex-1 relative w-full h-auto lg:h-full bg-[#070A12] flex flex-col overflow-y-visible">
+      <div className="flex-1 relative w-full bg-[#070A12] flex flex-col lg:h-full lg:overflow-y-auto pb-12 lg:pb-0">
         
-        {/* Top Tactical Floating Action Bar */}
-        <div className="relative lg:absolute top-0 lg:top-4 left-0 lg:left-4 right-0 lg:right-4 z-[1000] p-3 lg:p-0 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-2 pointer-events-auto lg:pointer-events-none">
-          <div className="bg-[#0D1424]/95 backdrop-blur-md border border-red-500/40 p-3 rounded-xl flex items-center gap-3 pointer-events-auto shadow-xl">
+        {/* Tactical Header Controls */}
+        <div className="p-3 lg:p-4 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-2.5 z-10">
+          <div className="bg-[#0D1424] border border-red-500/40 p-3 rounded-xl flex items-center gap-3 shadow-xl">
             <div className="p-2 bg-red-500/20 rounded-lg shrink-0">
               <AlertTriangle size={18} className="text-red-500 animate-pulse" />
             </div>
@@ -592,18 +592,18 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 pointer-events-auto">
+          <div className="flex flex-wrap gap-2">
             {/* Map Switcher */}
-            <div className="flex bg-[#0D1424]/95 border border-[#1E293B] rounded-xl p-1 gap-1 backdrop-blur-md">
+            <div className="flex bg-[#0D1424] border border-[#1E293B] rounded-xl p-1 gap-1">
               <button 
                 onClick={() => setMapLayer('satellite')}
-                className={`py-1 px-2 rounded-lg border-none text-[11px] font-bold cursor-pointer flex items-center gap-1 ${mapLayer === 'satellite' ? 'bg-[#06B6D4] text-[#080C14]' : 'bg-transparent text-slate-400'}`}
+                className={`py-1 px-2.5 rounded-lg border-none text-[11px] font-bold cursor-pointer flex items-center gap-1 ${mapLayer === 'satellite' ? 'bg-[#06B6D4] text-[#080C14]' : 'bg-transparent text-slate-400'}`}
               >
                 <Satellite size={13} /> Satellite
               </button>
               <button 
                 onClick={() => setMapLayer('topo')}
-                className={`py-1 px-2 rounded-lg border-none text-[11px] font-bold cursor-pointer flex items-center gap-1 ${mapLayer === 'topo' ? 'bg-[#06B6D4] text-[#080C14]' : 'bg-transparent text-slate-400'}`}
+                className={`py-1 px-2.5 rounded-lg border-none text-[11px] font-bold cursor-pointer flex items-center gap-1 ${mapLayer === 'topo' ? 'bg-[#06B6D4] text-[#080C14]' : 'bg-transparent text-slate-400'}`}
               >
                 <Mountain size={13} /> Topo
               </button>
@@ -612,7 +612,7 @@ export default function App() {
             <button onClick={handleTriggerIVR} className={`py-2 px-3 rounded-xl text-[11px] font-extrabold border-none cursor-pointer text-white flex items-center gap-1.5 shadow-lg ${ivrTriggered ? 'bg-emerald-600' : 'bg-red-600'}`}>
               <PhoneCall size={14} /> {ivrTriggered ? t.ivrDispatched : t.triggerIVR}
             </button>
-            <button onClick={() => setEvacuationActive(!evacuationActive)} className={`py-2 px-3 rounded-xl text-[11px] font-extrabold border cursor-pointer flex items-center gap-1.5 backdrop-blur-md ${evacuationActive ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-[#0D1424]/95 border-[#1E293B] text-cyan-400'}`}>
+            <button onClick={() => setEvacuationActive(!evacuationActive)} className={`py-2 px-3 rounded-xl text-[11px] font-extrabold border cursor-pointer flex items-center gap-1.5 ${evacuationActive ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-[#0D1424] border-[#1E293B] text-cyan-400'}`}>
               <Navigation size={14} /> {evacuationActive ? t.evacActive : t.evacRoute}
             </button>
           </div>
@@ -620,180 +620,229 @@ export default function App() {
 
         {/* TAB 1: SATELLITE MAP */}
         {activeTab === 'prediction' && (
-          <div className="w-full h-[450px] lg:h-full relative overflow-hidden" style={{ touchAction: 'pan-y' }}>
-            <MapContainer
-              center={selectedZone.center}
-              zoom={selectedZone.zoom || 15}
-              style={{ width: '100%', height: '100%', backgroundColor: '#070A12' }}
-              zoomControl={false}
-              scrollWheelZoom={false}
-            >
-              {mapLayer === 'satellite' ? (
-                <>
-                  <TileLayer
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    attribution='&copy; ESRI Satellite'
-                    maxZoom={18}
-                  />
-                  <TileLayer
-                    url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-                    attribution='&copy; ESRI Places'
-                    maxZoom={18}
-                    opacity={0.9}
-                  />
-                </>
-              ) : (
-                <TileLayer
-                  url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; OpenTopoMap'
-                  maxZoom={17}
-                />
-              )}
-              
-              <MapRecenter center={selectedZone.center} zoom={selectedZone.zoom || 15} />
-
-              {/* HAZARD FAILURE POLYGON */}
-              {selectedZone.hazardPolygon && (
-                <Polygon
-                  key={`hazard-poly-${selectedZone.id}`}
-                  positions={selectedZone.hazardPolygon}
-                  pathOptions={{
-                    color: selectedZone.riskLevel === 'CRITICAL' ? '#EF4444' : '#F97316',
-                    fillColor: selectedZone.riskLevel === 'CRITICAL' ? '#DC2626' : '#EA580C',
-                    fillOpacity: 0.45,
-                    weight: 2.5,
-                    dashArray: '6, 6'
-                  }}
-                >
-                  <Popup>
-                    <div style={{ color: '#000', fontSize: '11px', fontWeight: 'bold' }}>
-                      <b>IMMINENT FAILURE ZONE: {selectedZone.name}</b><br />
-                      Failure Probability: {(selectedZone.pFailure * 100)}%<br />
-                      Lead Time: {selectedZone.leadTimeHours}h | Fs: {selectedZone.factorOfSafety}
-                    </div>
-                  </Popup>
-                </Polygon>
-              )}
-
-              {/* Danger Pin */}
-              <CircleMarker
-                key={`danger-pin-${selectedZone.id}`}
+          <div className="w-full px-3 lg:px-4 flex flex-col gap-4">
+            <div className="w-full h-[380px] lg:h-[480px] rounded-2xl overflow-hidden border border-[#1E293B] relative" style={{ touchAction: 'pan-y' }}>
+              <MapContainer
                 center={selectedZone.center}
-                radius={7}
-                pathOptions={{
-                  color: '#FFF',
-                  fillColor: selectedZone.riskLevel === 'CRITICAL' ? '#DC2626' : '#EA580C',
-                  fillOpacity: 1.0,
-                  weight: 2.5
-                }}
-              />
+                zoom={selectedZone.zoom || 15}
+                style={{ width: '100%', height: '100%', backgroundColor: '#070A12' }}
+                zoomControl={false}
+                scrollWheelZoom={false}
+              >
+                {mapLayer === 'satellite' ? (
+                  <>
+                    <TileLayer
+                      url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                      attribution='&copy; ESRI Satellite'
+                      maxZoom={18}
+                    />
+                    <TileLayer
+                      url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                      attribution='&copy; ESRI Places'
+                      maxZoom={18}
+                      opacity={0.9}
+                    />
+                  </>
+                ) : (
+                  <TileLayer
+                    url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; OpenTopoMap'
+                    maxZoom={17}
+                  />
+                )}
+                
+                <MapRecenter center={selectedZone.center} zoom={selectedZone.zoom || 15} />
 
-              {/* Evacuation Laser Path */}
-              {evacuationActive && selectedZone.evacuationPlan && (
-                <>
-                  <Polyline
-                    key={`glow-track-${selectedZone.id}`}
-                    positions={selectedZone.evacuationPlan.waypoints}
+                {/* HAZARD FAILURE POLYGON */}
+                {selectedZone.hazardPolygon && (
+                  <Polygon
+                    key={`hazard-poly-${selectedZone.id}`}
+                    positions={selectedZone.hazardPolygon}
                     pathOptions={{
-                      color: 'rgba(16, 185, 129, 0.45)',
-                      weight: 12,
-                      opacity: 0.6
-                    }}
-                  />
-                  <Polyline
-                    key={`laser-track-${selectedZone.id}`}
-                    positions={selectedZone.evacuationPlan.waypoints}
-                    pathOptions={{
-                      color: '#10B981',
-                      weight: 5,
-                      opacity: 1.0
-                    }}
-                  />
-                  <CircleMarker
-                    key={`shelter-pin-${selectedZone.id}`}
-                    center={selectedZone.evacuationPlan.waypoints[selectedZone.evacuationPlan.waypoints.length - 1]}
-                    radius={12}
-                    pathOptions={{
-                      color: '#34D399',
-                      fillColor: '#059669',
-                      fillOpacity: 1.0,
-                      weight: 3.5
+                      color: selectedZone.riskLevel === 'CRITICAL' ? '#EF4444' : '#F97316',
+                      fillColor: selectedZone.riskLevel === 'CRITICAL' ? '#DC2626' : '#EA580C',
+                      fillOpacity: 0.45,
+                      weight: 2.5,
+                      dashArray: '6, 6'
                     }}
                   >
                     <Popup>
                       <div style={{ color: '#000', fontSize: '11px', fontWeight: 'bold' }}>
-                        <b>SAFE SHELTER:</b> {selectedZone.evacuationPlan.safeZoneName}<br />
-                        Capacity: {selectedZone.evacuationPlan.capacity} persons<br />
-                        Status: {selectedZone.evacuationPlan.activeStatus}
+                        <b>IMMINENT FAILURE ZONE: {selectedZone.name}</b><br />
+                        Failure Probability: {(selectedZone.pFailure * 100)}%<br />
+                        Lead Time: {selectedZone.leadTimeHours}h | Fs: {selectedZone.factorOfSafety}
                       </div>
                     </Popup>
-                  </CircleMarker>
-                </>
-              )}
-            </MapContainer>
-
-            {/* Evacuation Route Card */}
-            {evacuationActive && selectedZone.evacuationPlan && (
-              <div className="absolute top-16 right-3 z-[1000] max-w-[90%] lg:max-w-xs">
-                {!isDrawerExpanded ? (
-                  <div 
-                    onClick={() => setIsDrawerExpanded(true)}
-                    className="bg-[#0D1424]/95 backdrop-blur-md border border-emerald-500/60 p-2.5 rounded-xl flex items-center gap-2 cursor-pointer shadow-lg"
-                  >
-                    <div className="p-1.5 bg-emerald-500/20 rounded-lg">
-                      <Navigation size={15} className="text-emerald-400" />
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-extrabold text-white block">
-                        Safe Route: {selectedZone.evacuationPlan.distanceKm}
-                      </span>
-                      <span className="text-[9px] text-emerald-400 font-bold">
-                        Click for Directions
-                      </span>
-                    </div>
-                    <ChevronDown size={15} className="text-slate-400" />
-                  </div>
-                ) : (
-                  <div className="bg-[#0D1424]/95 border border-emerald-500/50 rounded-2xl p-3.5 shadow-2xl backdrop-blur-md">
-                    <div className="flex justify-between items-center border-b border-[#1E293B] pb-2">
-                      <div className="flex items-center gap-2">
-                        <Navigation size={15} className="text-emerald-400" />
-                        <h4 className="m-0 text-xs text-white font-extrabold">Safe Evacuation Route</h4>
-                      </div>
-                      <button onClick={() => setIsDrawerExpanded(false)} className="bg-transparent border-none text-slate-400 cursor-pointer">
-                        <ChevronUp size={16} />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 my-2.5">
-                      <div className="p-2 bg-[#070A12] rounded-lg border border-[#1E293B]">
-                        <span className="text-[9px] text-slate-400 block">Shelter</span>
-                        <span className="text-[11px] text-white font-bold">{selectedZone.evacuationPlan.safeZoneName}</span>
-                      </div>
-                      <div className="p-2 bg-[#070A12] rounded-lg border border-[#1E293B]">
-                        <span className="text-[9px] text-slate-400 block">Distance</span>
-                        <span className="text-[11px] text-cyan-400 font-bold">{selectedZone.evacuationPlan.distanceKm}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1 text-[10px] text-slate-300">
-                      {selectedZone.evacuationPlan.steps.map((step, idx) => (
-                        <div key={idx} className="flex items-start gap-1.5">
-                          <span className="text-emerald-400 font-bold">{idx + 1}.</span>
-                          <span>{step}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  </Polygon>
                 )}
+
+                {/* Danger Pin */}
+                <CircleMarker
+                  key={`danger-pin-${selectedZone.id}`}
+                  center={selectedZone.center}
+                  radius={7}
+                  pathOptions={{
+                    color: '#FFF',
+                    fillColor: selectedZone.riskLevel === 'CRITICAL' ? '#DC2626' : '#EA580C',
+                    fillOpacity: 1.0,
+                    weight: 2.5
+                  }}
+                />
+
+                {/* Evacuation Laser Path */}
+                {evacuationActive && selectedZone.evacuationPlan && (
+                  <>
+                    <Polyline
+                      key={`glow-track-${selectedZone.id}`}
+                      positions={selectedZone.evacuationPlan.waypoints}
+                      pathOptions={{
+                        color: 'rgba(16, 185, 129, 0.45)',
+                        weight: 12,
+                        opacity: 0.6
+                      }}
+                    />
+                    <Polyline
+                      key={`laser-track-${selectedZone.id}`}
+                      positions={selectedZone.evacuationPlan.waypoints}
+                      pathOptions={{
+                        color: '#10B981',
+                        weight: 5,
+                        opacity: 1.0
+                      }}
+                    />
+                    <CircleMarker
+                      key={`shelter-pin-${selectedZone.id}`}
+                      center={selectedZone.evacuationPlan.waypoints[selectedZone.evacuationPlan.waypoints.length - 1]}
+                      radius={12}
+                      pathOptions={{
+                        color: '#34D399',
+                        fillColor: '#059669',
+                        fillOpacity: 1.0,
+                        weight: 3.5
+                      }}
+                    >
+                      <Popup>
+                        <div style={{ color: '#000', fontSize: '11px', fontWeight: 'bold' }}>
+                          <b>SAFE SHELTER:</b> {selectedZone.evacuationPlan.safeZoneName}<br />
+                          Capacity: {selectedZone.evacuationPlan.capacity} persons<br />
+                          Status: {selectedZone.evacuationPlan.activeStatus}
+                        </div>
+                      </Popup>
+                    </CircleMarker>
+                  </>
+                )}
+              </MapContainer>
+
+              {/* Evacuation Route Card */}
+              {evacuationActive && selectedZone.evacuationPlan && (
+                <div className="absolute top-3 right-3 z-[1000] max-w-[85%]">
+                  {!isDrawerExpanded ? (
+                    <div 
+                      onClick={() => setIsDrawerExpanded(true)}
+                      className="bg-[#0D1424]/95 border border-emerald-500/60 p-2.5 rounded-xl flex items-center gap-2 cursor-pointer shadow-lg backdrop-blur-md"
+                    >
+                      <div className="p-1.5 bg-emerald-500/20 rounded-lg">
+                        <Navigation size={15} className="text-emerald-400" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] font-extrabold text-white block">
+                          Safe Route: {selectedZone.evacuationPlan.distanceKm}
+                        </span>
+                        <span className="text-[9px] text-emerald-400 font-bold">
+                          Click for Guidance
+                        </span>
+                      </div>
+                      <ChevronDown size={15} className="text-slate-400" />
+                    </div>
+                  ) : (
+                    <div className="bg-[#0D1424]/95 border border-emerald-500/50 rounded-2xl p-3.5 shadow-2xl backdrop-blur-md">
+                      <div className="flex justify-between items-center border-b border-[#1E293B] pb-2">
+                        <div className="flex items-center gap-2">
+                          <Navigation size={15} className="text-emerald-400" />
+                          <h4 className="m-0 text-xs text-white font-extrabold">Safe Evacuation Route</h4>
+                        </div>
+                        <button onClick={() => setIsDrawerExpanded(false)} className="bg-transparent border-none text-slate-400 cursor-pointer">
+                          <ChevronUp size={16} />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 my-2.5">
+                        <div className="p-2 bg-[#070A12] rounded-lg border border-[#1E293B]">
+                          <span className="text-[9px] text-slate-400 block">Shelter</span>
+                          <span className="text-[11px] text-white font-bold">{selectedZone.evacuationPlan.safeZoneName}</span>
+                        </div>
+                        <div className="p-2 bg-[#070A12] rounded-lg border border-[#1E293B]">
+                          <span className="text-[9px] text-slate-400 block">Distance</span>
+                          <span className="text-[11px] text-cyan-400 font-bold">{selectedZone.evacuationPlan.distanceKm}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1 text-[10px] text-slate-300">
+                        {selectedZone.evacuationPlan.steps.map((step, idx) => (
+                          <div key={idx} className="flex items-start gap-1.5">
+                            <span className="text-emerald-400 font-bold">{idx + 1}.</span>
+                            <span>{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* BOTTOM AI & PHYSICS METRICS PANEL */}
+            <div className="w-full bg-[#0D1424] border border-[#1E293B] p-4 rounded-2xl shadow-xl mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                
+                {/* Sector Summary */}
+                <div className="border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-3 lg:pb-0 lg:pr-3">
+                  <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Hotspot Vector</span>
+                  <h3 className="m-0 text-sm font-black text-white">{selectedZone.name}</h3>
+                  <p className="m-0 text-xs text-slate-400 mt-1">
+                    {t.leadTime}: <b className="text-emerald-400">{selectedZone.leadTimeHours}h</b> | Exposed: <b className="text-amber-400">{selectedZone.exposedPopulation}</b>
+                  </p>
+                </div>
+
+                {/* Explainable AI SHAP Weights */}
+                <div className="border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-3 lg:pb-0 lg:pr-3">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Explainable AI</span>
+                    <span className="text-[9px] bg-cyan-500/15 text-cyan-400 px-1.5 py-0.5 rounded font-extrabold">XGBoost</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {selectedZone.shapReasons.map((reason, idx) => (
+                      <div key={idx} className="bg-[#070A12] border border-[#1E293B] p-1.5 rounded-lg flex justify-between items-center text-[10px]">
+                        <span className="text-slate-300">{reason.feature}</span>
+                        <span className="text-red-400 font-extrabold">{reason.weight}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Failover Status */}
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Failover Engine</span>
+                  <div className="flex flex-col gap-1.5 mt-1.5">
+                    <div className={`p-1.5 rounded-lg border flex justify-between text-[10px] ${selectedZone.silentZone ? 'border-red-500/40 bg-red-500/15 text-red-400' : 'border-[#1E293B] bg-[#070A12] text-slate-400'}`}>
+                      <span>Cellular:</span>
+                      <b>{selectedZone.silentZone ? 'SILENT (DRONE)' : 'NOMINAL 4G/5G'}</b>
+                    </div>
+                    <div className="p-1.5 rounded-lg border border-[#1E293B] bg-[#070A12] flex justify-between text-[10px] text-slate-300">
+                      <span>LoRa Siren:</span>
+                      <b className={selectedZone.sirenStatus === 'TRIGGERED' ? 'text-red-400' : 'text-emerald-400'}>{selectedZone.sirenStatus}</b>
+                    </div>
+                  </div>
+                </div>
+
               </div>
-            )}
+            </div>
           </div>
         )}
 
         {/* TAB 2: RESCUE BOARD */}
         {activeTab === 'rescue' && (
-          <div className="p-4 lg:p-8 flex flex-col gap-4">
+          <div className="p-4 lg:p-6 flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="m-0 text-base lg:text-lg text-white font-black">{t.allocBoard}</h2>
@@ -847,7 +896,7 @@ export default function App() {
 
         {/* TAB 3: TELEMETRY STREAM */}
         {activeTab === 'telemetry' && (
-          <div className="p-4 lg:p-8 flex flex-col gap-4">
+          <div className="p-4 lg:p-6 flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="m-0 text-base lg:text-lg text-white font-black">{t.liveTelemetry}</h2>
@@ -900,7 +949,7 @@ export default function App() {
 
         {/* TAB 4: ANALYTICS */}
         {activeTab === 'analytics' && (
-          <div className="p-4 lg:p-8 flex flex-col gap-4">
+          <div className="p-4 lg:p-6 flex flex-col gap-4">
             <div>
               <h2 className="m-0 text-base lg:text-lg text-white font-black">{t.analyticsTab}</h2>
               <p className="m-0 text-xs text-slate-400">Cumulative Rainfall vs InSAR Creep Velocity</p>
@@ -938,53 +987,6 @@ export default function App() {
             </div>
           </div>
         )}
-
-        {/* BOTTOM AI & PHYSICS METRICS PANEL */}
-        <div className="relative lg:absolute bottom-0 lg:bottom-4 left-0 lg:left-4 right-0 lg:right-4 z-[1000] p-3 lg:p-4 m-3 lg:m-0 bg-[#0D1424]/95 border border-[#1E293B] rounded-2xl backdrop-blur-md shadow-2xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            
-            {/* Sector Summary */}
-            <div className="border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-3 lg:pb-0 lg:pr-3">
-              <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Hotspot Vector</span>
-              <h3 className="m-0 text-sm font-black text-white">{selectedZone.name}</h3>
-              <p className="m-0 text-xs text-slate-400 mt-1">
-                {t.leadTime}: <b className="text-emerald-400">{selectedZone.leadTimeHours}h</b> | Exposed: <b className="text-amber-400">{selectedZone.exposedPopulation}</b>
-              </p>
-            </div>
-
-            {/* Explainable AI SHAP Weights */}
-            <div className="border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-3 lg:pb-0 lg:pr-3">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Explainable AI</span>
-                <span className="text-[9px] bg-cyan-500/15 text-cyan-400 px-1.5 py-0.5 rounded font-extrabold">XGBoost</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {selectedZone.shapReasons.map((reason, idx) => (
-                  <div key={idx} className="bg-[#070A12] border border-[#1E293B] p-1.5 rounded-lg flex justify-between items-center text-[10px]">
-                    <span className="text-slate-300">{reason.feature}</span>
-                    <span className="text-red-400 font-extrabold">{reason.weight}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Failover Status */}
-            <div>
-              <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Failover Engine</span>
-              <div className="flex flex-col gap-1.5 mt-1.5">
-                <div className={`p-1.5 rounded-lg border flex justify-between text-[10px] ${selectedZone.silentZone ? 'border-red-500/40 bg-red-500/15 text-red-400' : 'border-[#1E293B] bg-[#070A12] text-slate-400'}`}>
-                  <span>Cellular:</span>
-                  <b>{selectedZone.silentZone ? 'SILENT (DRONE)' : 'NOMINAL 4G/5G'}</b>
-                </div>
-                <div className="p-1.5 rounded-lg border border-[#1E293B] bg-[#070A12] flex justify-between text-[10px] text-slate-300">
-                  <span>LoRa Siren:</span>
-                  <b className={selectedZone.sirenStatus === 'TRIGGERED' ? 'text-red-400' : 'text-emerald-400'}>{selectedZone.sirenStatus}</b>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
 
       </div>
     </div>
