@@ -32,7 +32,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { hazardZones } from './data/mockDisasterData';
 
-// Fix Leaflet icons
+// Fix Leaflet default icon paths
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -182,7 +182,7 @@ export default function App() {
   const [lang, setLang] = useState('en');
   const t = translations[lang];
 
-  const [mapLayer, setMapLayer] = useState('satellite'); // 'satellite' | 'topo'
+  const [mapLayer, setMapLayer] = useState('satellite');
   const [selectedRegion, setSelectedRegion] = useState('ALL');
   const [selectedZone, setSelectedZone] = useState(hazardZones[0]);
   const [activeTab, setActiveTab] = useState('prediction');
@@ -201,7 +201,7 @@ export default function App() {
 
   const fileInputRef = useRef(null);
 
-  // Live WebSocket Telemetry State
+  // Telemetry State
   const [telemetry, setTelemetry] = useState({
     porePressure: 142.4,
     piezometerLevel: 28.6,
@@ -218,7 +218,7 @@ export default function App() {
       const data = await res.json();
       setSosList(data.incidents || []);
     } catch (err) {
-      console.log("Using local state");
+      console.log("Using local fallback");
     }
   };
 
@@ -227,7 +227,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Graceful WS fallback if running on production Render/Vercel
     const wsUrl = window.location.hostname === 'localhost' 
       ? 'ws://localhost:8000/ws/telemetry' 
       : 'wss://parvat-rakshak-api.onrender.com/ws/telemetry';
@@ -241,9 +240,7 @@ export default function App() {
           setTelemetry(data);
         } catch (e) {}
       };
-    } catch (e) {
-      console.log("WebSocket running offline fallback");
-    }
+    } catch (e) {}
     return () => {
       if (socket) socket.close();
     };
@@ -269,7 +266,7 @@ export default function App() {
       const data = await res.json();
       setSosList(prev => [data.incident, ...prev]);
     } catch (err) {
-      console.log("Error dispatching SOS payload", err);
+      console.log("Error dispatching SOS", err);
     }
   };
 
@@ -322,9 +319,7 @@ export default function App() {
     setIvrTriggered(true);
     try {
       await fetch(`https://parvat-rakshak-api.onrender.com/api/ivr/trigger?zone_name=${encodeURIComponent(selectedZone.name)}`, { method: 'POST' });
-    } catch (err) {
-      console.log("IVR triggered locally");
-    }
+    } catch (err) {}
     setTimeout(() => setIvrTriggered(false), 3500);
   };
 
@@ -344,18 +339,28 @@ export default function App() {
 
   return (
     <>
-      {/* Responsive Style Overrides to keep Laptop 100% untouched while making Mobile fully scrollable */}
       <style>{`
-        .app-root-container {
+        /* Global Reset for Seamless Scrolling */
+        html, body, #root {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          min-height: 100%;
+          background-color: #070A12;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        /* Desktop Layout (Untouched) */
+        .rakshak-layout {
           display: flex;
           height: 100vh;
           width: 100vw;
           background-color: #070A12;
           color: #F1F5F9;
           overflow: hidden;
-          font-family: Inter, system-ui, sans-serif;
+          font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        .app-sidebar {
+        .rakshak-sidebar {
           width: 360px;
           min-width: 360px;
           background-color: #0D1424;
@@ -367,7 +372,7 @@ export default function App() {
           z-index: 20;
           overflow-y: auto;
         }
-        .app-viewport {
+        .rakshak-viewport {
           flex: 1;
           position: relative;
           height: 100%;
@@ -376,7 +381,12 @@ export default function App() {
           display: flex;
           flex-direction: column;
         }
-        .app-floating-top {
+        .rakshak-map-box {
+          width: 100%;
+          height: 100%;
+          position: relative;
+        }
+        .rakshak-top-actions {
           position: absolute;
           top: 16px;
           left: 16px;
@@ -387,7 +397,7 @@ export default function App() {
           align-items: center;
           pointer-events: none;
         }
-        .app-bottom-drawer {
+        .rakshak-bottom-panel {
           position: absolute;
           bottom: 16px;
           left: 16px;
@@ -400,16 +410,11 @@ export default function App() {
           backdrop-filter: blur(10px);
           box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
-        .app-bottom-grid {
+        .rakshak-bottom-grid {
           display: grid;
           grid-template-columns: 1.2fr 2.5fr 1.3fr;
           gap: 16px;
           align-items: center;
-        }
-        .map-section-wrapper {
-          width: 100%;
-          height: 100%;
-          position: relative;
         }
         .telemetry-grid {
           display: grid;
@@ -417,63 +422,82 @@ export default function App() {
           gap: 16px;
         }
 
-        /* MOBILE OVERRIDES ONLY (max-width: 900px) */
-        @media (max-width: 900px) {
-          .app-root-container {
-            flex-direction: column;
-            height: auto;
-            min-height: 100vh;
-            overflow-y: auto;
-            overflow-x: hidden;
+        /* MOBILE SPECIFIC OVERRIDES (Screen width < 960px) */
+        @media (max-width: 960px) {
+          html, body, #root {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            height: auto !important;
           }
-          .app-sidebar {
-            width: 100%;
-            min-width: 100%;
-            border-right: none;
+          .rakshak-layout {
+            display: flex !important;
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 100vh !important;
+            overflow: visible !important;
+          }
+          .rakshak-sidebar {
+            width: 100% !important;
+            min-width: 100% !important;
+            border-right: none !important;
+            border-bottom: 2px solid #1E293B !important;
+            box-sizing: border-box !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .rakshak-viewport {
+            height: auto !important;
+            min-height: auto !important;
+            position: relative !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: visible !important;
+          }
+          .rakshak-top-actions {
+            position: static !important;
+            pointer-events: auto !important;
+            padding: 14px 12px 6px 12px !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          .rakshak-top-actions > div {
+            width: 100% !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+          }
+          .rakshak-map-box {
+            height: 420px !important;
+            min-height: 420px !important;
+            margin-top: 10px;
+            touch-action: pan-y !important;
+          }
+          .rakshak-bottom-panel {
+            position: static !important;
+            margin: 16px 12px 32px 12px !important;
+            border-radius: 14px !important;
+          }
+          .rakshak-bottom-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .rakshak-bottom-grid > div {
+            border-right: none !important;
             border-bottom: 1px solid #1E293B;
-            box-sizing: border-box;
-            height: auto;
+            padding-right: 0 !important;
+            padding-bottom: 12px;
           }
-          .app-viewport {
-            height: auto;
-            min-height: 700px;
-            position: static;
-            display: block;
-          }
-          .map-section-wrapper {
-            height: 480px;
-            position: relative;
-          }
-          .app-floating-top {
-            position: static;
-            pointer-events: auto;
-            padding: 12px;
-            flex-direction: column;
-            gap: 10px;
-          }
-          .app-floating-top > div {
-            width: 100%;
-            box-sizing: border-box;
-            justify-content: center;
-            flex-wrap: wrap;
-          }
-          .app-bottom-drawer {
-            position: static;
-            margin: 16px 12px;
-            border-radius: 14px;
-          }
-          .app-bottom-grid {
-            grid-template-columns: 1fr;
-            gap: 14px;
+          .rakshak-bottom-grid > div:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
           }
           .telemetry-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
           }
         }
       `}</style>
 
-      <div className="app-root-container">
+      <div className="rakshak-layout">
         
         {/* CITIZEN SOS MODAL */}
         {isSOSModalOpen && (
@@ -522,7 +546,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* REAL PHOTO UPLOAD & YOLOv8 VISION SECTION */}
+              {/* PHOTO UPLOAD & YOLOv8 SECTION */}
               <div style={{ borderTop: '1px solid #1E293B', paddingTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Edge Crack Metrology & Aperture Estimation
@@ -586,7 +610,7 @@ export default function App() {
         )}
 
         {/* LEFT SIDEBAR */}
-        <div className="app-sidebar">
+        <div className="rakshak-sidebar">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             
             {/* Brand */}
@@ -710,7 +734,7 @@ export default function App() {
               ))}
             </div>
 
-            {/* Quick Real-Time Status Bar */}
+            {/* Status Bar */}
             <div style={{ padding: '12px', backgroundColor: '#070A12', borderRadius: '12px', border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
                 <span style={{ color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -736,10 +760,10 @@ export default function App() {
         </div>
 
         {/* RIGHT MAIN VIEWPORT */}
-        <div className="app-viewport">
+        <div className="rakshak-viewport">
           
           {/* Top Tactical Floating Action Bar */}
-          <div className="app-floating-top">
+          <div className="rakshak-top-actions">
             <div style={{ backgroundColor: 'rgba(13, 20, 36, 0.94)', backdropFilter: 'blur(10px)', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '12px 16px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '12px', pointerEvents: 'auto', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.6)' }}>
               <div style={{ padding: '8px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: '10px' }}>
                 <AlertTriangle size={18} color="#EF4444" className="animate-pulse" />
@@ -781,18 +805,18 @@ export default function App() {
           </div>
 
           {/* DYNAMIC VIEWPORT ROUTING */}
-          <div style={{ flex: 1, position: 'relative', width: '100%', height: '100%', overflowY: 'auto' }}>
+          <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: '420px', overflowY: 'visible' }}>
             
-            {/* TAB 1: SATELLITE + HYBRID GIS ENGINE */}
+            {/* TAB 1: SATELLITE MAP */}
             {activeTab === 'prediction' && (
-              <div className="map-section-wrapper">
+              <div className="rakshak-map-box">
                 <MapContainer
                   center={selectedZone.center}
                   zoom={selectedZone.zoom || 15}
                   style={{ width: '100%', height: '100%', backgroundColor: '#070A12' }}
                   zoomControl={false}
+                  scrollWheelZoom={false}
                 >
-                  {/* 1. Base Layer */}
                   {mapLayer === 'satellite' ? (
                     <>
                       <TileLayer
@@ -840,7 +864,7 @@ export default function App() {
                     </Polygon>
                   )}
 
-                  {/* Tactical Danger Center Pin */}
+                  {/* Danger Pin */}
                   <CircleMarker
                     key={`danger-pin-${selectedZone.id}`}
                     center={selectedZone.center}
@@ -853,10 +877,9 @@ export default function App() {
                     }}
                   />
 
-                  {/* ACCURATE ROAD-ALIGNED SAFE EVACUATION VECTOR */}
+                  {/* EVACUATION VECTOR */}
                   {evacuationActive && selectedZone.evacuationPlan && (
                     <>
-                      {/* Glowing Under-track */}
                       <Polyline
                         key={`glow-track-${selectedZone.id}`}
                         positions={selectedZone.evacuationPlan.waypoints}
@@ -867,19 +890,16 @@ export default function App() {
                         }}
                       />
 
-                      {/* Laser Directional Line */}
                       <Polyline
                         key={`laser-track-${selectedZone.id}`}
                         positions={selectedZone.evacuationPlan.waypoints}
                         pathOptions={{
                           color: '#10B981',
                           weight: 5,
-                          opacity: 1.0,
-                          className: 'laser-evac-path'
+                          opacity: 1.0
                         }}
                       />
                       
-                      {/* Safe Relief Shelter Destination Pin */}
                       <CircleMarker
                         key={`shelter-pin-${selectedZone.id}`}
                         center={selectedZone.evacuationPlan.waypoints[selectedZone.evacuationPlan.waypoints.length - 1]}
@@ -903,9 +923,9 @@ export default function App() {
                   )}
                 </MapContainer>
 
-                {/* NON-OBSTRUCTIVE FLOATING EVACUATION CONTROLLER */}
+                {/* Evacuation Route Card */}
                 {evacuationActive && selectedZone.evacuationPlan && (
-                  <div style={{ position: 'absolute', top: '80px', right: '16px', width: isDrawerExpanded ? '360px' : 'auto', zIndex: 1000, transition: 'all 0.3s ease' }}>
+                  <div style={{ position: 'absolute', top: '20px', right: '16px', width: isDrawerExpanded ? '340px' : 'auto', zIndex: 1000, transition: 'all 0.3s ease' }}>
                     {!isDrawerExpanded ? (
                       <div 
                         onClick={() => setIsDrawerExpanded(true)}
@@ -954,7 +974,7 @@ export default function App() {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '12px 0' }}>
                           <div style={{ padding: '8px', backgroundColor: '#070A12', borderRadius: '8px', border: '1px solid #1E293B' }}>
-                            <span style={{ fontSize: '9px', color: '#94A3B8', display: 'block' }}>Destination Shelter</span>
+                            <span style={{ fontSize: '9px', color: '#94A3B8', display: 'block' }}>Shelter</span>
                             <span style={{ fontSize: '11px', color: '#FFF', fontWeight: '700' }}>{selectedZone.evacuationPlan.safeZoneName}</span>
                           </div>
                           <div style={{ padding: '8px', backgroundColor: '#070A12', borderRadius: '8px', border: '1px solid #1E293B' }}>
@@ -964,7 +984,7 @@ export default function App() {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: '700', textTransform: 'uppercase' }}>Turn-by-Turn Avoidance Directions:</span>
+                          <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: '700', textTransform: 'uppercase' }}>Directions:</span>
                           {selectedZone.evacuationPlan.steps.map((step, idx) => (
                             <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '10px', color: '#CBD5E1' }}>
                               <span style={{ color: '#10B981', fontWeight: '800' }}>{idx + 1}.</span>
@@ -979,22 +999,22 @@ export default function App() {
               </div>
             )}
 
-            {/* TAB 2: RESCUE & DISPATCH BOARD */}
+            {/* TAB 2: RESCUE BOARD */}
             {activeTab === 'rescue' && (
-              <div style={{ padding: '90px 28px 120px 28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div style={{ padding: '24px 20px 80px 20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h2 style={{ margin: 0, fontSize: '18px', color: '#FFF', fontWeight: '800' }}>{t.allocBoard}</h2>
-                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94A3B8' }}>National Disaster Response Force (NDRF) Tactical Allocation & Prioritization Matrix</p>
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94A3B8' }}>National Disaster Response Force (NDRF) Tactical Matrix</p>
                   </div>
                   <span style={{ fontSize: '12px', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#F87171', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '6px 12px', borderRadius: '8px', fontWeight: '800' }}>
                     {sosList.length} Active Distress Calls
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
                   {sosList.map((sos) => (
-                    <div key={sos.id} style={{ backgroundColor: '#0D1424', border: '1px solid #1E293B', borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.4)' }}>
+                    <div key={sos.id} style={{ backgroundColor: '#0D1424', border: '1px solid #1E293B', borderRadius: '16px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: '900', color: '#EF4444' }}>{sos.id}</span>
                         <span style={{ fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '6px', backgroundColor: sos.status === 'ALLOCATED' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: sos.status === 'ALLOCATED' ? '#34D399' : '#F87171' }}>
@@ -1004,17 +1024,17 @@ export default function App() {
 
                       <div>
                         <h4 style={{ margin: '0 0 4px', fontSize: '14px', color: '#FFF', fontWeight: '700' }}>{sos.category}</h4>
-                        <p style={{ margin: 0, fontSize: '11px', color: '#94A3B8' }}>{sos.locationName} • {sos.peopleCount} Trapped Individuals</p>
+                        <p style={{ margin: 0, fontSize: '11px', color: '#94A3B8' }}>{sos.locationName} • {sos.peopleCount} Individuals</p>
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', backgroundColor: '#070A12', padding: '10px', borderRadius: '8px', border: '1px solid #1E293B' }}>
                         <span>Triage Urgency: <b style={{ color: '#EF4444' }}>{sos.medicalUrgency}</b></span>
-                        <span>Priority Index: <b style={{ color: '#06B6D4' }}>{sos.priorityScore}/100</b></span>
+                        <span>Priority Score: <b style={{ color: '#06B6D4' }}>{sos.priorityScore}/100</b></span>
                       </div>
 
                       {sos.assignedTeam ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#34D399', fontWeight: '800', padding: '6px 0' }}>
-                          <Check size={16} /> Deployed Unit: {sos.assignedTeam}
+                          <Check size={16} /> Deployed: {sos.assignedTeam}
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
@@ -1035,13 +1055,13 @@ export default function App() {
               </div>
             )}
 
-            {/* TAB 3: LIVE TELEMETRY STREAM */}
+            {/* TAB 3: TELEMETRY STREAM */}
             {activeTab === 'telemetry' && (
-              <div style={{ padding: '90px 28px 120px 28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div style={{ padding: '24px 20px 80px 20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h2 style={{ margin: 0, fontSize: '18px', color: '#FFF', fontWeight: '800' }}>{t.liveTelemetry}</h2>
-                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94A3B8' }}>Bi-directional Sensor Hub: <code>FastAPI Telemetry Stream</code></p>
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94A3B8' }}>Bi-directional Sensor Gateway</p>
                   </div>
                   <span style={{ fontSize: '11px', color: '#34D399', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '6px 12px', borderRadius: '8px', fontWeight: '800' }}>
                     Packet Clock: {telemetry.timestamp}
@@ -1055,21 +1075,21 @@ export default function App() {
                       <Droplets size={16} color="#06B6D4" />
                     </div>
                     <h3 style={{ margin: '10px 0 2px', fontSize: '24px', color: '#FFF', fontWeight: '900' }}>{telemetry.piezometerLevel} m</h3>
-                    <p style={{ margin: 0, fontSize: '11px', color: '#34D399' }}>Normal Baseline: &lt; 32 m</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#34D399' }}>Baseline: &lt; 32 m</p>
                   </div>
 
                   <div style={{ backgroundColor: '#0D1424', border: '1px solid #1E293B', padding: '18px', borderRadius: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: '11px', fontWeight: '700' }}>
-                      <span>Pore Water Saturation</span>
+                      <span>Pore Saturation</span>
                       <Gauge size={16} color="#F87171" />
                     </div>
                     <h3 style={{ margin: '10px 0 2px', fontSize: '24px', color: '#F87171', fontWeight: '900' }}>{telemetry.porePressure} kPa</h3>
-                    <p style={{ margin: 0, fontSize: '11px', color: '#F87171' }}>Critical Failure (130 kPa) Exceeded</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#F87171' }}>130 kPa Exceeded</p>
                   </div>
 
                   <div style={{ backgroundColor: '#0D1424', border: '1px solid #1E293B', padding: '18px', borderRadius: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: '11px', fontWeight: '700' }}>
-                      <span>Rainfall Intensity (IMERG)</span>
+                      <span>Rainfall Intensity</span>
                       <Droplets size={16} color="#06B6D4" />
                     </div>
                     <h3 style={{ margin: '10px 0 2px', fontSize: '24px', color: '#06B6D4', fontWeight: '900' }}>{telemetry.rainfallRate} mm/h</h3>
@@ -1078,47 +1098,39 @@ export default function App() {
 
                   <div style={{ backgroundColor: '#0D1424', border: '1px solid #1E293B', padding: '18px', borderRadius: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: '11px', fontWeight: '700' }}>
-                      <span>InSAR Ground Creep Velocity</span>
+                      <span>InSAR Creep Velocity</span>
                       <TrendingUp size={16} color="#F59E0B" />
                     </div>
                     <h3 style={{ margin: '10px 0 2px', fontSize: '24px', color: '#F59E0B', fontWeight: '900' }}>{telemetry.creepRate} mm/d</h3>
-                    <p style={{ margin: 0, fontSize: '11px', color: '#F87171' }}>Accelerated Shear Incline</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#F87171' }}>Accelerated Creep</p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 4: HISTORICAL ANALYTICS */}
+            {/* TAB 4: ANALYTICS */}
             {activeTab === 'analytics' && (
-              <div style={{ padding: '90px 28px 120px 28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div style={{ padding: '24px 20px 80px 20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '18px', color: '#FFF', fontWeight: '800' }}>{t.analyticsTab} (7-Day Subsurface Displacement Curve)</h2>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94A3B8' }}>Comparative Analysis of Cumulative Rainfall (mm) vs InSAR Incline Creep (mm/day)</p>
+                  <h2 style={{ margin: 0, fontSize: '18px', color: '#FFF', fontWeight: '800' }}>{t.analyticsTab}</h2>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94A3B8' }}>Cumulative Rainfall (mm) vs InSAR Incline Creep (mm/day)</p>
                 </div>
 
-                <div style={{ backgroundColor: '#0D1424', border: '1px solid #1E293B', padding: '24px', borderRadius: '16px' }}>
-                  <svg viewBox="0 0 700 200" style={{ width: '100%', height: '240px' }}>
+                <div style={{ backgroundColor: '#0D1424', border: '1px solid #1E293B', padding: '20px', borderRadius: '16px', overflowX: 'auto' }}>
+                  <svg viewBox="0 0 700 200" style={{ width: '100%', minWidth: '500px', height: '220px' }}>
                     <line x1="50" y1="20" x2="650" y2="20" stroke="#1E293B" strokeDasharray="4" />
                     <line x1="50" y1="80" x2="650" y2="80" stroke="#1E293B" strokeDasharray="4" />
                     <line x1="50" y1="140" x2="650" y2="140" stroke="#1E293B" strokeDasharray="4" />
                     <line x1="50" y1="170" x2="650" y2="170" stroke="#334155" />
 
                     <line x1="50" y1="55" x2="650" y2="55" stroke="#EF4444" strokeWidth="1.5" strokeDasharray="6" />
-                    <text x="540" y="48" fill="#EF4444" fontSize="10" fontWeight="bold">Critical Slope Rupture Threshold</text>
+                    <text x="500" y="48" fill="#EF4444" fontSize="10" fontWeight="bold">Critical Rupture Threshold</text>
 
                     <polyline
                       fill="none"
                       stroke="#06B6D4"
                       strokeWidth="3.5"
-                      points="
-                        50,165 
-                        150,158 
-                        250,148 
-                        350,125 
-                        450,95 
-                        550,60 
-                        650,22
-                      "
+                      points="50,165 150,158 250,148 350,125 450,95 550,60 650,22"
                     />
 
                     {historicalData.map((d, i) => {
@@ -1133,24 +1145,18 @@ export default function App() {
                       );
                     })}
                   </svg>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid #1E293B', paddingTop: '14px', marginTop: '12px', fontSize: '11px', flexWrap: 'wrap', gap: '8px' }}>
-                    <span style={{ color: '#06B6D4', fontWeight: '700' }}>● InSAR Ground Velocity (mm/day)</span>
-                    <span style={{ color: '#EF4444', fontWeight: '700' }}>- - Critical Geotechnical Rupture Threshold</span>
-                    <span style={{ color: '#94A3B8' }}>48h Saturated Moisture: <b>{selectedZone.rainfall48h} mm</b></span>
-                  </div>
                 </div>
               </div>
             )}
 
           </div>
 
-          {/* BOTTOM DRAWER: EXPLAINABLE AI & PHYSICS METRICS */}
-          <div className="app-bottom-drawer">
-            <div className="app-bottom-grid">
+          {/* BOTTOM DRAWER: AI & PHYSICS METRICS */}
+          <div className="rakshak-bottom-panel">
+            <div className="rakshak-bottom-grid">
               
               {/* Sector Summary */}
-              <div style={{ borderRight: '1px solid #1E293B', paddingRight: '12px' }}>
+              <div>
                 <span style={{ fontSize: '10px', color: '#94A3B8', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>Hotspot Vector Analysis</span>
                 <h3 style={{ margin: '4px 0 0 0', fontSize: '14px', fontWeight: '800', color: '#FFF' }}>{selectedZone.name}</h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#94A3B8' }}>
@@ -1159,7 +1165,7 @@ export default function App() {
               </div>
 
               {/* Explainable AI SHAP Weights */}
-              <div style={{ borderRight: '1px solid #1E293B', paddingRight: '12px' }}>
+              <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ fontSize: '10px', color: '#94A3B8', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>Explainable AI (SHAP Weights)</span>
                   <span style={{ fontSize: '9px', backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#06B6D4', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>Physics-Informed XGBoost</span>
@@ -1179,8 +1185,8 @@ export default function App() {
                 <span style={{ fontSize: '10px', color: '#94A3B8', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>Autonomous Failover Engine</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
                   <div style={{ padding: '5px 8px', borderRadius: '8px', border: selectedZone.silentZone ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid #1E293B', backgroundColor: selectedZone.silentZone ? 'rgba(239, 68, 68, 0.15)' : '#070A12', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: selectedZone.silentZone ? '#F87171' : '#94A3B8' }}>
-                    <span>Cellular Status:</span>
-                    <b>{selectedZone.silentZone ? 'SILENT (DRONE RECON)' : 'NOMINAL 4G/5G'}</b>
+                    <span>Cellular:</span>
+                    <b>{selectedZone.silentZone ? 'SILENT (DRONE)' : 'NOMINAL 4G/5G'}</b>
                   </div>
                   <div style={{ padding: '5px 8px', borderRadius: '8px', border: '1px solid #1E293B', backgroundColor: '#070A12', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#CBD5E1' }}>
                     <span>LoRa Siren:</span>
