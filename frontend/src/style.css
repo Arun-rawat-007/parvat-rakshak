@@ -2,21 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 100vh;
+  min-height: 100%;
   background-color: #070A12;
   color: #F1F5F9;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Enable normal vertical scrolling on mobile */
+/* Force mobile scrolling on screens smaller than 1024px */
 @media (max-width: 1024px) {
   html, body, #root {
+    height: auto !important;
+    min-height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    height: auto !important;
   }
+}
+
+/* Allow touch swiping over Leaflet map container */
+.leaflet-container {
+  touch-action: pan-y !important;
 }
