@@ -5,3 +5,7 @@ pandas
 numpy
 pydantic
 websockets
+sqlalchemy
+passlib
+python-jose
+python-multipart
