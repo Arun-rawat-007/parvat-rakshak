@@ -214,7 +214,7 @@ export default function App() {
 
   const fetchIncidents = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/incidents');
+      const res = await fetch('https://parvat-rakshak-api.onrender.com/api/incidents');
       const data = await res.json();
       setSosList(data.incidents);
     } catch (err) {
@@ -247,7 +247,7 @@ export default function App() {
     };
 
     try {
-      const res = await fetch('http://localhost:8000/api/sos', {
+      const res = await fetch('https://parvat-rakshak-api.onrender.com/api/sos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -261,7 +261,7 @@ export default function App() {
 
   const handleAssignUnit = async (sosId, unitName) => {
     try {
-      await fetch('http://localhost:8000/api/dispatch', {
+      await fetch('https://parvat-rakshak-api.onrender.com/api/dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ incidentId: sosId, unitName })
@@ -285,7 +285,7 @@ export default function App() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:8000/api/vision/crack-detect', {
+      const res = await fetch('https://parvat-rakshak-api.onrender.com/api/vision/crack-detect', {
         method: 'POST',
         body: formData
       });
@@ -307,7 +307,7 @@ export default function App() {
   const handleTriggerIVR = async () => {
     setIvrTriggered(true);
     try {
-      await fetch(`http://localhost:8000/api/ivr/trigger?zone_name=${encodeURIComponent(selectedZone.name)}`, { method: 'POST' });
+      await fetch(`https://parvat-rakshak-api.onrender.com/api/ivr/trigger?zone_name=${encodeURIComponent(selectedZone.name)}`, { method: 'POST' });
     } catch (err) {
       console.log("IVR triggered locally");
     }
@@ -1055,4 +1055,4 @@ export default function App() {
       </div>
     </div>
   );
-}
+} 
